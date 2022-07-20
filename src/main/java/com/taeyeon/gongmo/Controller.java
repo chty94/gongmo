@@ -3,9 +3,11 @@ package com.taeyeon.gongmo;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
+import org.jsoup.nodes.DataNode;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.jsoup.select.NodeFilter;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,12 +25,11 @@ import java.util.List;
 public class Controller {
 
     private final GongmoRepository gongmoRepository;
-
-    private String BASE_URL = "http://www.38.co.kr";
-
+    
     @GetMapping(value = "/info")
     public String info() throws IOException {
 
+        final String BASE_URL = "http://www.38.co.kr";
         Document document = Jsoup.connect("http://www.38.co.kr/html/fund/index.htm?o=k").get();
 
         Elements trElements = document.select("table[summary='공모주 청약일정'] tr");
@@ -58,13 +59,40 @@ public class Controller {
             String detailURL = BASE_URL + tdElements.get(6).select("a").attr("href");
             Document detailDocument = Jsoup.connect(detailURL).get();
             gongmoDataList.add(data);
-            System.out.println(detailDocument.select("table[summary='기업개요'] tr"));
-            System.out.println("==========");
-            System.out.println(detailDocument.select("table[summary='공모정보'] tr"));
-            System.out.println("==========");
-            System.out.println(detailDocument.select("table[summary='공모청약일정'] tr"));
-            break;
 
+            Elements company = detailDocument.select("table[summary='기업개요'] td");
+
+            for (Element element : company) {
+                if (element.attr("bgcolor").equals("#F1F4F7")) {
+                    System.out.print(element.text() + " : ");
+                } else {
+                    System.out.println(element.text());
+                }
+            }
+            System.out.println("==========");
+
+            Elements info = detailDocument.select("table[summary='공모정보'] td");
+            for (Element element : info) {
+                if (element.attr("bgcolor").equals("#F1F4F7")) {
+                    System.out.print(element.text() + " : ");
+                } else {
+                    System.out.println(element.text());
+                }
+            }
+            System.out.println("==========");
+
+            Elements day = detailDocument.select("table[summary='공모청약일정'] td");
+            for (Element element : day) {
+                if (element.attr("bgcolor").equals("#F1F4F7")) {
+                    System.out.print(element.text() + " : ");
+                } else if (element.attr("bgcolor").equals("#F5F5F2")) {
+                    System.out.print(element.text() + " : ");
+                } else {
+                    System.out.println(element.text());
+                }
+            }
+
+            break;
         }
         gongmoRepository.saveAll(gongmoDataList);
 
